@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+        == Copyright (c) 2002-2015 All rights reserved. 
+        == Financial Products Markup Language is subject to the FpML public license. 
+        == A copy of this license is available at http://www.fpml.org/license/license.html
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns="http://www.fpml.org/FpML-5/recordkeeping" xmlns:fpml-annotation="http://www.fpml.org/annotation" targetNamespace="http://www.fpml.org/FpML-5/recordkeeping" ecore:documentRoot="FpML" ecore:nsPrefix="" ecore:package="org.fpml.recordkeeping" version="$Revision: 11478 $" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xsd:include schemaLocation="fpml-fx-complex-5-8.xsd" />
+<!--
+        ================
+            complexTypes    
+        ================
+        -->
+  <xsd:complexType name="FxAccrualDigitalOption">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">An FX Accrual Digital Option product The product defines a list of fixing (or observation) dates. There are m total fixings. At the expiry date of the product, the buyer of the option has the right to an FX settlement with n/m * Notional. Payout can be cash or physical.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Option">
+        <xsd:sequence>
+          <xsd:sequence>
+<!--2015-2-05: FpML FX WG: agreed to remove "effectiveDate" of type "AdjustableOrRelativeDate" and  "tenorPeriod" of type "Period". Rationale: it is not clear where you need this information. We could always add it back when we see the requirements.-->
+<!--2015-2-05: FpML FX WG: agreed to replace "notionalAmount" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+            <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+            <xsd:element name="accrual" type="FxAccrual">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Describes accrual features within the product.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:group ref="FxExpiryDateOrSchedule.model">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines the expiry/observation date or schedule of the accrual product. The default dates' adjustments are as specified in the definitions.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:group>
+            <xsd:group ref="FxSettlementDateOrSchedule.model">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines the settlement/payment date or schedule of the accrual product. The default dates' adjustments are as specified in the definitions.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:group>
+            <xsd:element name="exerciseProcedure" type="ExerciseProcedure" minOccurs="0">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">A set of parameters defining procedures associated with the exercise.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="trigger" type="FxAccrualTrigger">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines one or more conditions underwhich the option will payout if exercisable.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+<!--2015-02-05:FpML FX WG: agreed to rename "accrualKnockoutBarrier" to "knockoutBarrier" -->
+            <xsd:element name="knockoutBarrier" type="FxAccrualKnockoutBarrier" minOccurs="0" maxOccurs="unbounded">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines a knockout barrier conditions where if a barrier event occurs, the accrual process is terminated for the duration of all remainin accrual periods. Settlement rights for the next settlement are either retained or extinguished.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="premium" type="FxOptionPremium">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Premium amount or premium installment amount for an option.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-01-08: FpML FX WG added FxCurrencyPayment component for FX Accrual Forward product-->
+  <xsd:complexType name="FxAccrualForward">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">The product defines a list of fixing (or observation) dates. There are m total fixings. In this Strategy, one accumulates a fixed proportion of Notional for every business day (or chosen frequency) that spot fixes within the pre-defined limits. If spot breaks the limits, the Notional stops accumulating during the fixings outside the limits, but continues accruing once spot comes back to the accruing region. At expiry, one buys the accrued Notional at the pre-agreed hedge rate. Payout can be cash or physical.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Product">
+        <xsd:sequence>
+<!--2015-02-05: FpML FX WG: agreed to move "exchangedCurrency1" ofType "FxCurrencyPayment" and "exchangedCurrency2" ofType "FxCurrencyPayment" inside "vanillaPayoffRegion" component-->
+<!--2015-02-05: FpML FX WG: agreed not to include  "quotedCurrencyPair" component-->
+<!--2015-02-05: FpML FX WG: agreed to remove "effectiveDate" of type "AdjustableOrRelativeDate" and  "tenorPeriod" of type "Period". Rationale: it is not clear where you need this information. We could always add it back when we see the requirements.-->
+<!--2015-02-05: FpML FX WG: agreed to replace "notionalAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+          <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product per settlement period. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-03-12: FpML FX WG: moved counterCurrencyAmount to VanillaPayoffRegion-->
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+          <xsd:element name="accrual" type="FxAccrual">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Describes accrual features within the product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-01-13: GFXD: agreed to call the end of accrual period - expiryDate - for accrual forward as well-->
+          <xsd:group ref="FxExpiryDateOrSchedule.model">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the expiry/observation date or schedule of the accrual product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:group>
+          <xsd:group ref="FxSettlementDateOrSchedule.model">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the settlement/payment date or schedule of the accrual product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:group>
+<!--2015-02-02: Removed exerciseProcedure: not relevant for forward-->
+<!--2015-02-05: FpML FX WG: agreed to move "strike" ofType "FxForwardStrikePrice" and "averageStrike" ofType="FxAverageStrike" inside "vanillaPayoffRegion" component-->
+<!--2015-01-29:FpML FX WG: agreed to add support for averageStrike/averageRate product component-->
+<!--2015-02-05: renamed back to spotRate to align all FX products-->
+<!--2015-02-02: renamed from spotRate to align with Target product-->
+          <xsd:element name="spotRate" type="PositiveDecimal" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">An optional element used for FX forwards and certain types of FX OTC options. For deals consumated in the FX Forwards Market, this represents the current market rate for a particular currency pair. For barrier and digital/binary options, it can be useful to include the spot rate at the time the option was executed to make it easier to know whether the option needs to move "up" or "down" to be triggered.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:choice>
+            <xsd:sequence>
+<!--2015-01-29: FpML FX WG: propose payoffRegion to support collar -->
+              <xsd:element name="vanillaPayoffRegion" type="FxAccrualVanillaPayoffRegion" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation xml:lang="en">A region in which a vanilla payoff occurs.</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+<!--2015-01-29: FpML FX WG: added support for Average Rate Accrual Forward. 
+                                                                - This is a property you would calculate for the product as a whole at maturity and which you would then use with a relevant payoff region to establish the payoff -->
+              <xsd:element name="averageRate" type="FxAverageRate" minOccurs="0">
+                <xsd:annotation>
+                  <xsd:documentation xml:lang="en">Average Rate Forward: means the average of the Reference Spot Rate on each Business Day from and including the Calculation Start Date up to and including the Calculation End Date rounded to the precision decimal places.</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:sequence>
+            <xsd:element name="variableStrikePayoffRegion" type="FxAccrualVariableStrikePayoffRegion" maxOccurs="unbounded">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">A region in which a vanilla payoff occurs.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:choice>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+<!--2015-02-05:FpML FX WG: agreed to rename "accrualKnockoutBarrier" to "knockoutBarrier" -->
+          <xsd:element name="knockoutBarrier" type="FxAccrualKnockoutBarrier" minOccurs="0" maxOccurs="unbounded">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines a knockout barrier conditions where if a barrier event occurs, the accrual process is terminated for the duration of all remainin accrual periods. Settlement rights for the next settlement are either retained or extinguished.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="settlementPeriodSchedule" type="SettlementPeriodSchedule" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">It supports the representation of a matrix/tabular approach of the product by defining a set of settlement periods.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="additionalPayment" type="SimplePayment">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">It supports the representation of premiums, fees, etc.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-02-05: Moved "cashSettlement" last to be in sync with FX Options, Fx Accruals, FX Targets-->
+          <xsd:element name="cashSettlement" type="FxCashSettlementSimple" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Cash settlement currency.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualKnockoutBarrier">
+    <xsd:complexContent>
+      <xsd:extension base="FxBarrierBase">
+        <xsd:sequence>
+          <xsd:element name="type" type="FxAccrualKnockoutBarrierTypeEnum" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">"Keep" means that the parties retain settlement rights at the end of the current accrual period fixed at the prevailing accrued notional and settlement rights for all other accrual periods are extinguished. "Lose" means settlement rights for all accrual periods are extinguished and the product is effectively extinguished.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:choice>
+            <xsd:element name="observableReference" type="FxRateObservableReference" />
+            <xsd:sequence>
+<!--2015-01-06:GFXD: Added for Accruals (TBD with FpML FX WG)-->
+              <xsd:element name="quotedCurrencyPair" type="QuotedCurrencyPair">
+                <xsd:annotation>
+                  <xsd:documentation xml:lang="en">Defines the two currencies for an FX trade and the quotation relationship between the two currencies.</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+<!--2015-01-06:GFXD: Added for Accruals (TBD with FpML FX WG)-->
+              <xsd:element name="informationSource" type="InformationSource" minOccurs="0" maxOccurs="unbounded">
+                <xsd:annotation>
+                  <xsd:documentation xml:lang="en">The information source where a published or displayed market rate will be obtained, e.g. Telerate Page 3750.</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:choice>
+<!--<xsd:group ref="FxAccrualKnockoutBarrier.model">
+                                                <xsd:annotation>
+                                                        <xsd:documentation>Defines a knockout barrier where if a barrier event occurs, the accrual process is terminated for the duration of all remainin accrual periods. Settlement rights for the next settlement are either retained or extinguished.</xsd:documentation>
+                                                        <xsd:appinfo>
+                                                                <view:override view="transparency" minOccurs="1"/>
+                                                                <view:override view="recordkeeping" minOccurs="1"/>
+                                                        </xsd:appinfo>
+                                                </xsd:annotation>
+                                        </xsd:group>-->
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualOption">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">An FX Accrual Option product The product defines a list of fixing (or observation) dates. There are m total fixings. At the expiry date of the product, the buyer of the option has the right to an FX settlement with n/m * Notional. Payout can be cash or physical.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Option">
+        <xsd:sequence>
+<!--2015-02-05: FpML FX WG: agreed to remove "effectiveDate" of type "AdjustableOrRelativeDate" and  "tenorPeriod" of type "Period". Rationale: it is not clear where you need this information. We could always add it back when we see the requirements.-->
+<!--What defines the underlying product that is going to be paid-->
+          <xsd:group ref="PutCallCurrency.model">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">A model defining the currencies exchanged by the parties to an option.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:group>
+<!--2015-02-05: FpML FX WG: agreed to replace "notionalAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+          <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-03-12: FpML FX WG: moved counterCurrencyAmount after strike-->
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+          <xsd:element name="accrual" type="FxAccrual">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Describes accrual features within the product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:group ref="FxExpiryDateOrSchedule.model">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the expiry/observation date or schedule of the accrual product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:group>
+          <xsd:group ref="FxSettlementDateOrSchedule.model">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the settlement/payment date or schedule of the accrual product.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:group>
+          <xsd:element name="exerciseProcedure" type="ExerciseProcedure" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">A set of parameters defining procedures associated with the exercise.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-02-05: renamed back to spotRate to align all FX products-->
+<!--2015-02-02: renamed from spotRate-->
+          <xsd:element name="spotRate" type="PositiveDecimal" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">An optional element used for FX forwards and certain types of FX OTC options. For deals consumated in the FX Forwards Market, this represents the current market rate for a particular currency pair. For barrier and digital/binary options, it can be useful to include the spot rate at the time the option was executed to make it easier to know whether the option needs to move "up" or "down" to be triggered.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:choice>
+            <xsd:element name="strike" type="FxStrikePrice">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines the option strike price.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+<!--2015-01-29: FpML FX WG: added support for Average Strike Accrual Option-->
+            <xsd:element name="averageStrike" type="FxAverageStrike">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Average Strike: means the average of the Reference Spot Rate on each Business Day from and including the Calculation Start Date up to and including the Calculation End Date rounded to the precision decimal places.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:choice>
+<!--2015-03-12: FpML FX WG: moved counterCurrencyAmount after strike from the top of the product; Changed type to NonNegativeAmountSchedule from FxCounterCurrencyAmount since strikeReference is no longer needed-->
+<!--2015-02-05: FpML FX WG: agreed to replace "counterCurrencyAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+<!--2015-01-15:FpML FX WG: the counterCurrencyAmount  element should not be unbounded-->
+          <xsd:element name="counterCurrencyAmount" type="NonNegativeAmountSchedule" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">The opposite currency amount the amount which is not always deterministicl.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-01-29: FpML FX WG: added support for Average Rate Accrual Option-->
+          <xsd:element name="averageRate" type="FxAverageRate" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Average Rate: means the average of the Reference Spot Rate on each Business Day from and including the Calculation Start Date up to and including the Calculation End Date rounded to the precision decimal places.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+<!--2015-02-05:FpML FX WG: agreed to rename "accrualKnockoutBarrier" to "knockoutBarrier" -->
+          <xsd:element name="knockoutBarrier" type="FxAccrualKnockoutBarrier" minOccurs="0" maxOccurs="unbounded">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines a knockout barrier conditions where if a barrier event occurs, the accrual process is terminated for the duration of all remainin accrual periods. Settlement rights for the next settlement are either retained or extinguished.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="premium" type="FxOptionPremium">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Premium amount or premium installment amount for an option.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-03-12: FpML FX WG: renamed to FxAccrualLeverage from FxAccrualPayoffLeverage-->
+<!--2015-01-15: FpML FX WG: Add leverage - Condition, Level, Choice of ratio or notionalAmount-->
+  <xsd:complexType name="FxAccrualLeverage">
+    <xsd:sequence>
+      <xsd:element name="condition" type="ConditionEnum" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Condition in which leverage applies.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:group ref="FxAccrualConditionLevel.model" />
+      <xsd:choice minOccurs="0">
+        <xsd:element name="ratio" type="Schedule">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Leverage rate with optional steps. Format is 2 for 200%.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:sequence>
+          <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product per settlement period. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-02-05: FpML FX WG: agreed to replace "counterCurrencyAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+<!--2015-01-29: FpML FX WG: made element optional to support Average Strike Accrual Option-->
+          <xsd:element name="counterCurrencyAmount" type="FxCounterCurrencyAmount" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">The opposite currency amount. The counterCurrencyAmount element is only optional if averageStrike component is present, in all other cases this element must be populated.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:choice>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:ID" />
+  </xsd:complexType>
+<!--2015-03-12:FpML FX WG: Renamed FxAccrualProcess to 'FxAccrual' to be in sync with Target model process such as 'FxTarget'-->
+  <xsd:complexType name="FxAccrual">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Accrual calculation process.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="observable" type="FxRateObservable" maxOccurs="unbounded" />
+      <xsd:element name="accrualRegion" type="FxAccrualRegion" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Defines the regions of the spot rate where fixings generate an accumulation of notional.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="fixingSchedule" type="FxFixingSchedule">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Describes a parametrc schedule of fixing dates.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:ID" use="optional" />
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualRegion">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Defines a region of spot rate where the notional for the settlement period accrues by the accrued amount per fixing each time the spot rate fixes withing the region.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+<!--2015-01-08: FpML FX WG: Added an observableReference inside the accrualRegion -->
+      <xsd:element name="observableReference" type="FxRateObservableReference" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Identifies the FX rate used as the basis for the condition (the accrual region).</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+<!--2015-01-08: FpML FX WG: Added an observableTime inside the accrualRegion -->
+      <xsd:group ref="FxAccrualRegionBound.model" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Defines the boundaries of the accrual region. If an upper or lower barrier is not defined then it is understood that if the barrier is missing in the direction facing the strike then the region is bounded by the strike but excludes the strike; if the barrier is missing in the direction facing away from the strike then the accrual region is unbounded in that direction. If the region is bounded by the strike then a barrier should be included to define whether the region includes or excludes the strike. If accrual regions overlap, it is understood that if one is nested within another wider region, the nested region takes precedence over the spot range that it applies. If there is an overlap but no nesting then this is invalid and barriers must be used to unequivocally define the regions.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:group>
+<!--2015-01-08: FpML FX WG: Added an optional startDate and endDate in the accrualRegion.-->
+      <xsd:choice minOccurs="0">
+        <xsd:sequence>
+          <xsd:element name="startDate" type="xsd:date">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the start date of the observation period for the barrier. If ommitted, the first barrier observation point is understood to be the first fixing date in the fxing schedule.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+          <xsd:element name="endDate" type="xsd:date" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Defines the end date of the observation period for the barrier. If ommitted, the last barrier observation point is understood to be the last fixing date in the fixing schedule.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+        <xsd:element name="endDate" type="xsd:date">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Defines the end date of the observation period for the barrier. If ommitted, the last barrier observation point is understood to be the last fixing date in the fixing schedule.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:choice>
+      <xsd:choice minOccurs="0">
+<!--2015-01-08: FpML FX WG: need to know the difference with accrualFactor before adding an optional multiplier in the accrualRegion-->
+<!--<xsd:element name="accrualFactor" type="xsd:decimal" minOccurs="0">
+                                        <xsd:annotation>
+                                                <xsd:documentation xml:lang="en">A multiplier applied to the notional amount per fixing of each currency to specify the amount accrued each time the spot rate fixes within the accrual region. If the accrualFactor is omitted, the factor is one.</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>-->
+        <xsd:element name="accrualFactor" type="Schedule">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">A multiplier applied to the notional amount per fixing of each currency to specify the amount accrued each time the spot rate fixes within the accrual region. If the accrualFactor is omitted, the factor is one.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:sequence>
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">The 'notionalAmount' and 'counterCurrencyAmount' are only applicable if the contract has a variable strike (element 'variableStrikePayoffRegion' is present)</xsd:documentation>
+          </xsd:annotation>
+          <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product per settlement period. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+<!--2015-02-05: FpML FX WG: agreed to replace "counterCurrencyAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+<!--2015-01-29: FpML FX WG: made element optional to support Average Strike Accrual Option-->
+          <xsd:element name="counterCurrencyAmount" type="FxCounterCurrencyAmount" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">The opposite currency amount. The counterCurrencyAmount element is only optional if averageStrike component is present, in all other cases this element must be populated.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:choice>
+    </xsd:sequence>
+  </xsd:complexType>
+<!--2015-01-29:FpML FX WG: added FxAccrualRegionBound.model to segregate from Target references that ae not applicable to Accruals -->
+  <xsd:complexType name="FxAccrualRegionLowerBound">
+    <xsd:sequence>
+      <xsd:element name="condition" type="FxRegionLowerBoundDirectionEnum" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">AtOrAbove, Above.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:group ref="FxAccrualConditionLevel.model" />
+    </xsd:sequence>
+  </xsd:complexType>
+<!--2015-01-29:FpML FX WG: added FxAccrualRegionBound.model to segregate from Target references that ae not applicable to Accruals -->
+  <xsd:complexType name="FxAccrualRegionUpperBound">
+    <xsd:sequence>
+      <xsd:element name="condition" type="FxRegionUpperBoundDirectionEnum" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">AtOrBelow, Below.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:group ref="FxAccrualConditionLevel.model" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualTrigger">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Describes a european trigger applied to an FX digtal option.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="FxTriggerBase">
+        <xsd:sequence>
+          <xsd:element name="informationSource" type="InformationSource" minOccurs="0" maxOccurs="unbounded">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">The information source where a published or displayed market rate will be obtained, e.g. Telerate Page 3750.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualVanillaPayoffRegion">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A region in which a vanilla payoff occurs.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:group ref="FxExchangedCurrency.model" />
+      <xsd:choice>
+        <xsd:element name="strike" type="FxForwardStrikePrice">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">The rate of exchange between the two currencies.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+<!--2015-01-29: FpML FX WG: added support for Average Strike Accrual Forward. averageStrike is a property of a payoff region in a choice with strike-->
+        <xsd:element name="averageStrike" type="FxAverageStrike">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Average Strike Forward: means the average of the Reference Spot Rate on each Business Day from and including the Calculation Start Date up to and including the Calculation End Date rounded to the precision decimal places.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:choice>
+<!--2015-03-12: FpML FX WG: moved counterCurrencyAmount to VanillaPayoffRegion from the top of the product; Changed type to NonNegativeAmountSchedule from FxCounterCurrencyAmount since strikeReference is no longer needed-->
+<!--2015-02-05: FpML FX WG: agreed to replace "counterCurrencyAmount" element's "NonNegativeMoney" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+<!--2015-01-29: FpML FX WG: made element optional to support Average Strike Accrual Option-->
+      <xsd:element name="counterCurrencyAmount" type="NonNegativeAmountSchedule" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The opposite currency amount. The counterCurrencyAmount element is only optional if averageStrike component is present, in all other cases this element must be populated.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+<!--upperBound and lowerBound are both optional - as in the target, where there is only one vanillaPayoffRegion, neither would be used-->
+      <xsd:group ref="FxAccrualRegionBound.model" minOccurs="0" />
+<!--2015-03-12: FpML FX WG: renamed to 'leverage' from payoffLeverage-->
+<!--2015-01-15: FpML FX WG: moved after "accrualKnockoutBarrier"; renamed from "leverage"; changed cardinality from [0..unbounded]-->
+<!--2015-01-15: FpML FX WG: Add leverage - Condition, Level, Choice of ratio or notionalAmount-->
+      <xsd:element name="leverage" type="FxAccrualLeverage" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">These structures define a leverage multiplier to the payoff amounts at settlement points.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="payoffCap" type="FxPayoffCap" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The amount of gain on the client upside or firm upside is limited. If spot settles above the cap, or below the floor, the payout is adjusted to limit the gain. The adjustment may be made by varying the strike, or by maintaining the strike, but varying the payout notionals.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FxAccrualVariableStrikePayoffRegion">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A region in which a vanilla payoff occurs.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:group ref="FxExchangedCurrency.model" />
+      <xsd:group ref="FxAccrualRegionBound.model" minOccurs="0" />
+<!--2015-03-12: FpML FX WG: renamed to leverage from payoffLeverage-->
+      <xsd:element name="leverage" type="FxAccrualLeverage" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">These structures define a leverage multiplier to the payoff amounts at settlement points.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="payoffCap" type="FxPayoffCap" minOccurs="0" maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The amount of gain on the client upside or firm upside is limited. If spot settles above the cap, or below the floor, the payout is adjusted to limit the gain. The adjustment may be made by varying the strike, or by maintaining the strike, but varying the payout notionals.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FxAdjustedDateAndDateAdjustments">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Defines the expiry/observation schedule of the target.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:sequence>
+        <xsd:element name="dateAdjustments" type="BusinessDayAdjustments" minOccurs="0">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Date adjustments applied to the adjusted dates including the business day convention and the business centers. The date adjustments are as specified in the definitions.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name="adjustedDate" type="xsd:date" minOccurs="0">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">List of schedule dates. These dates have been subject to adjustments based on the dateAdjustments structure.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FxAverageRate">
+    <xsd:complexContent>
+      <xsd:extension base="FxAveragingProcess">
+<!--<xsd:attribute name="id" type="xsd:ID" use="optional"/>-->
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-01-29:FpML FX WG: added suport for AverageRate/Strike -->
+<!--<xsd:complexType name="FxAverageRateReference">
+                <xsd:annotation>
+                        <xsd:documentation xml:lang="en">Reference to an average rate structure.</xsd:documentation>
+                </xsd:annotation>
+                <xsd:complexContent>
+                        <xsd:extension base="Reference">
+                                <xsd:attribute name="href" type="xsd:IDREF" use="required" ecore:reference="FxAverageRate"/>
+                        </xsd:extension>
+                </xsd:complexContent>
+        </xsd:complexType>-->
+  <xsd:complexType name="FxAverageStrike">
+    <xsd:complexContent>
+      <xsd:extension base="FxAveragingProcess">
+        <xsd:sequence>
+          <xsd:element name="strikeAdjustment" type="xsd:decimal" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">A layer an Adjustment on the top of the average of the fixings across the schedule.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+<!--<xsd:attribute name="id" type="xsd:ID" use="optional"/>-->
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-01-29:FpML FX WG: added suport for AverageRate/Strike -->
+  <xsd:complexType name="FxAverageStrikeReference">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Reference to an average rate structure.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Reference">
+        <xsd:attribute name="href" type="xsd:IDREF" use="required" ecore:reference="FxAverageStrike" />
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FixingDatesAndWeights">
+    <xsd:sequence>
+      <xsd:element name="date" type="xsd:date" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">A specific date for which an observation against a particular rate will be made and will be used for subsequent computations.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="weight" type="xsd:decimal" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">An optional factor that can be used for weighting certain observation dates. Typically, firms will weight each date with a factor of 1 if there are standard, unweighted adjustments.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="FxAveragingProcess">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Accrual calculation process.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="FxRateObservable">
+        <xsd:sequence>
+<!--View Generation: Removed a degenerate choice.-->
+          <xsd:sequence>
+            <xsd:element name="fixingSchedule" type="FxFixingSchedule">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Describes a parametrc schedule of fixing dates.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="fixingDatesAndWeights" type="FixingDatesAndWeights" minOccurs="0" maxOccurs="unbounded" />
+          </xsd:sequence>
+          <xsd:element name="averagingMethod" type="FxAveragingMethodEnum" minOccurs="0" />
+          <xsd:element name="precision" type="xsd:nonNegativeInteger" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Specifies the rounding precision in terms of a number of decimal places. Note how a percentage rate rounding of 5 decimal places is expressed as a rounding precision of 7 in the FpML document since the percentage is expressed as a decimal, e.g. 9.876543% (or 0.09876543) being rounded to the nearest 5 decimal places is 9.87654% (or 0.0987654).</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-02-19:TBD added Cross Rate component for Observable-->
+  <xsd:complexType name="FxCrossRateObservable">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A type that is used for including the currency exchange rates information used to cross between the traded currencies for non-base currency FX contracts.</xsd:documentation>
+    </xsd:annotation>
+<!--current representation-->
+    <xsd:sequence>
+      <xsd:element name="quotedCurrencyPair" type="QuotedCurrencyPair" />
+      <xsd:element name="informationSource" type="FxInformationSource" minOccurs="0" />
+    </xsd:sequence>
+<!--HMcA proposal-->
+<!--<xsd:sequence>
+                        <xsd:element name="quotedCurrencyPair" type="QuotedCurrencyPair">
+                                <xsd:annotation>
+                                        <xsd:appinfo>
+                                                <view:override view="recordkeeping" minOccurs="1"/>
+                                                <view:override view="transparency" minOccurs="1"/>
+                                        </xsd:appinfo>
+                                </xsd:annotation>
+                        </xsd:element>
+                        <xsd:choice>
+                                <xsd:element name="settlementRateOption" type="SettlementRateOption">
+                                        <xsd:annotation>
+                                                <xsd:documentation xml:lang="en">Indicates that an officially defined rate settlement rate option will be the used for the fixing.</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="nonstandardSettlementRate" type="FxInformationSource">
+                                        <xsd:annotation>
+                                                <xsd:documentation xml:lang="en">Indicates that a non-standard rate source will be used for the fixing.</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+                        </xsd:choice>
+                </xsd:sequence>-->
+<!--IY: to separate settlement rate option from quoted currency pair-->
+<!--<xsd:choice>
+                        <xsd:sequence>
+                                <xsd:element name="quotedCurrencyPair" type="QuotedCurrencyPair">
+                                        <xsd:annotation>
+                                                <xsd:appinfo>
+                                                        <view:override view="recordkeeping" minOccurs="1"/>
+                                                        <view:override view="transparency" minOccurs="1"/>
+                                                </xsd:appinfo>
+                                        </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="informationSource" type="FxInformationSource">
+                                        <xsd:annotation>
+                                                <xsd:documentation xml:lang="en">Indicates that a non-standard rate source will be used for the fixing.</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+                        </xsd:sequence>
+                        <xsd:element name="settlementRateOption" type="SettlementRateOption">
+                                <xsd:annotation>
+                                        <xsd:documentation xml:lang="en">Indicates that an officially defined rate settlement rate option will be the used for the fixing.</xsd:documentation>
+                                </xsd:annotation>
+                        </xsd:element>
+                </xsd:choice>-->
+  </xsd:complexType>
+<!--    <xsd:complexType name="FxCurrencyPayment">
+                <xsd:annotation>
+                        <xsd:documentation xml:lang="en">A type for defining the payment of an undefined amount of currency in an FX transaction.</xsd:documentation>
+                </xsd:annotation>
+                <xsd:sequence>
+                        <xsd:group ref="PayerReceiver.model">
+                                <xsd:annotation/>
+                        </xsd:group>
+                        <xsd:element name="currency" type="Currency">
+                                <xsd:annotation>
+                                        <xsd:documentation xml:lang="en">The currency of the payment.</xsd:documentation>
+                                </xsd:annotation>
+                        </xsd:element>
+                </xsd:sequence>
+        </xsd:complexType>-->
+<!--2015-02-02: Created a specific accrual type. it cannot reused "FxStrike"-->
+  <xsd:complexType name="FxExpiryDate">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Defines the expiry/observation schedule of the accrual.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="FxAdjustedDateAndDateAdjustments">
+        <xsd:sequence>
+          <xsd:element name="expiryTime" type="BusinessCenterTime" minOccurs="0">
+            <xsd:annotation>
+              <xsd:documentation xml:lang="en">Time of expiration of each expiry date.</xsd:documentation>
+            </xsd:annotation>
+          </xsd:element>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FxFixingSchedule">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Describes a parametric schedule of fixing dates.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:group ref="ParametricSchedule.model">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">A parametric description of a schedule of fixing dates.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:group>
+      <xsd:element name="numberOfFixings" type="xsd:nonNegativeInteger" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The number of fixing points in the fixing schedule.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+<!--2015-02-02: added attribute id-->
+  <xsd:complexType name="FxForwardStrikePrice">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A type that describes the rate of exchange at which the option has been struck.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="rate" type="PositiveDecimal">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The rate of exchange between the two currencies of the leg of a deal.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+<!--2015-01-13:GFXD:  Agreed to keep separately the option strike model from the forward strike model (for accrual forwards). 
+                                                                        Remove quotedCurrencyPair component, use QuoteBasisEnum directly -->
+      <xsd:element name="quoteBasis" type="QuoteBasisEnum" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The Quoted Currency Pair that is used accross the product.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:ID" use="optional" />
+  </xsd:complexType>
+  <xsd:complexType name="FxForwardStrikePriceReference">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Reference to a strike structure in Accruals products.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Reference">
+        <xsd:attribute name="href" type="xsd:IDREF" use="required" ecore:reference="FxForwardStrikePrice" />
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="FxRangeAccrual">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">An FX Range Accrual product. A strip of Digital Options product The product defines a list of fixing (or observation) dates. There are m total fixings. On the relevant Settlement Date, the Option Seller shall pay to the Option Buyer an amount, in the Settlement Currency, calculated according to the following formula: Accrual Currency and Notional Amount x (the total number of Accrual Days / Total Number of Calendar Days in the Accrual Period). Payout can be cash.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Product">
+        <xsd:sequence>
+          <xsd:sequence>
+            <xsd:group ref="PayerReceiver.model" />
+<!--2015-2-05: FpML FX WG: agreed to remove "effectiveDate" of type "AdjustableOrRelativeDate" and  "tenorPeriod" of type "Period". Rationale: it is not clear where you need this information. We could always add it back when we see the requirements.-->
+<!--2015-2-05: FpML FX WG: agreed to replace "notionalAmount" type with "NonNegativeAmountSchedule" type to support Strips, contract with multiple notionals -->
+            <xsd:element name="notionalAmount" type="NonNegativeAmountSchedule">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Notional amount Schedule. The notional value of the product. This number divided by the total number of fixings in the fixing schedule is the amount that is accrued at each fixing if the accrual factor is one.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+            <xsd:element name="accrual" type="FxAccrual">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Describes accrual features within the product.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:group ref="FxExpiryDateOrSchedule.model">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines the expiry/observation date or schedule of the accrual product.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:group>
+            <xsd:group ref="FxSettlementDateOrSchedule.model">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines the settlement/payment date or schedule of the accrual product.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:group>
+<!--2015-03-12:FpML FX WG: Moved accrualProcess to the top. Renamed accrualProcess to 'accrual' to be in sync with Target model process such as 'target'-->
+<!--2015-02-05:FpML FX WG: agreed to rename "accrualKnockoutBarrier" to "knockoutBarrier" -->
+            <xsd:element name="knockoutBarrier" type="FxAccrualKnockoutBarrier" minOccurs="0" maxOccurs="unbounded">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Defines a knockout barrier conditions where if a barrier event occurs, the accrual process is terminated for the duration of all remainin accrual periods. Settlement rights for the next settlement are either retained or extinguished.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+            <xsd:element name="premium" type="FxOptionPremium">
+              <xsd:annotation>
+                <xsd:documentation xml:lang="en">Premium amount or premium installment amount for an option.</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:sequence>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--2015-02-19:TBD refactored FxRateObservable to include the ability to specify Cross Rate component for Observable-->
+  <xsd:complexType name="FxRateObservable">
+    <xsd:sequence>
+      <xsd:element name="quotedCurrencyPair" type="QuotedCurrencyPair">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">FX rate to be observed. The Quoted Currency Pair that is used accross the product.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:choice>
+        <xsd:element name="informationSource" type="FxInformationSource">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Information source for fixing the exchange rate. It is the same for all fixing periods.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name="crossRate" type="FxCrossRateObservable" maxOccurs="unbounded" />
+      </xsd:choice>
+    </xsd:sequence>
+    <xsd:attribute name="id" type="xsd:ID" />
+  </xsd:complexType>
+  <xsd:complexType name="FxRateObservableReference">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Reference to an "FxRateObservable" structure.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="Reference">
+        <xsd:attribute name="href" type="xsd:IDREF" use="required" ecore:reference="FxRateObservable" />
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+<!--
+        ================
+            elements    
+        ================
+        -->
+  <xsd:element name="fxAccrualDigitalOption" type="FxAccrualDigitalOption" substitutionGroup="product">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A type defining an accrual digital option FX transaction.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element name="fxAccrualForward" type="FxAccrualForward" substitutionGroup="product">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A structured forward product which consists of a strip of forwards. Each forward may be settled as an exchange of currencies or cash settled. At each settlement, the amount of gain that one party achieves is measured. The product has a target level of gain. Once the accumulated gain exceeds the target level, the product terminates and there are no further settlements.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element name="fxAccrualOption" type="FxAccrualOption" substitutionGroup="product">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A structured option product which consists of a strip of accrual options. Each Option may be settled as an exchange of currencies or cash settled. At each settlement, the amount of gain that one party achieves is measured. The product has a target level of gain. Once the accumulated gain exceeds the target level, the product terminates and there are no further settlements.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+  <xsd:element name="fxRangeAccrual" type="FxRangeAccrual" substitutionGroup="product">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">A type defining an range accrual FX transaction.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+<!--
+        ================
+            groups    
+        ================
+        -->
+<!--2015-01-29:FpML FX WG: added FxAccrualConditionLevel.model to segregate from Target references that ae not applicable to Accruals   -->
+  <xsd:group name="FxAccrualConditionLevel.model">
+    <xsd:annotation>
+      <xsd:documentation xml:lang="en">Conditions can be expressed in different ways: as a specific level, as strike, pivot, or barrier.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice>
+      <xsd:sequence>
+        <xsd:element name="level" type="xsd:decimal" minOccurs="0">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">Level expressed as a level.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name="quoteBasis" type="QuoteBasisEnum" minOccurs="0">
+          <xsd:annotation>
+            <xsd:documentation xml:lang="en">The Quoted Currency Pair that is used accross the product.</xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+      </xsd:sequence>
+      <xsd:element name="strikeReference" type="FxForwardStrikePriceReference">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Reference to a strike defined within the FX product.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="averageStrikeReference" type="FxAverageStrikeReference">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Reference to an average rate defined within the FX accrual option and forward products.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+  </xsd:group>
+<!--2015-01-29:FpML FX WG: added FxAccrualRegionBound.model to segregate from Target references that ae not applicable to Accruals -->
+  <xsd:group name="FxAccrualRegionBound.model">
+    <xsd:sequence>
+      <xsd:element name="lowerBound" type="FxAccrualRegionLowerBound" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Defines the lower bound of a payoff region.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="upperBound" type="FxAccrualRegionUpperBound" minOccurs="0">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Defines the upper bound of a payoff region.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:group>
+  <xsd:group name="FxExpiryDateOrSchedule.model">
+    <xsd:choice>
+      <xsd:element name="expiryDate" type="FxExpiryDate">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">Defines the expiry of a single period accrual forward FX transaction.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="expirySchedule" type="FxExpirySchedule">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The parameters for defining a schedule of expiry periods for a accrual forward FX transaction.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+  </xsd:group>
+  <xsd:group name="FxSettlementDateOrSchedule.model">
+    <xsd:choice>
+      <xsd:element name="settlementDate" type="FxAdjustedDateAndDateAdjustments">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The date on which settlement takes place for a settlement period.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="settlementSchedule" type="FxSettlementSchedule">
+        <xsd:annotation>
+          <xsd:documentation xml:lang="en">The parameters for defining a schedule of settlement periods for a accrual forward FX transaction.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+  </xsd:group>
+</xsd:schema>
+
